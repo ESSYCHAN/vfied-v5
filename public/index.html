@@ -620,47 +620,48 @@
     <div class="wrap">
       <div class="section-head">
         <div class="section-kicker">Audit scope</div>
-        <div class="section-title">What the audit actually tests.</div>
+        <div class="section-title">How we actually test your AI</div>
         <div class="section-sub">
-          We run structured adversarial prompts across real-world failure patterns.
+          We don't run generic prompts.<br>
+          We simulate how real users push systems to the edge.
         </div>
       </div>
 
       <div class="scope-table">
         <div class="scope-row">
           <div class="scope-num">01</div>
-          <div class="scope-name">Direct abuse prompts</div>
-          <div class="scope-desc">Explicit harmful requests used to test baseline refusal behaviour and boundary clarity.</div>
+          <div class="scope-name">Direct abuse</div>
+          <div class="scope-desc">Clear harmful requests to test baseline refusal.</div>
         </div>
 
         <div class="scope-row">
           <div class="scope-num">02</div>
-          <div class="scope-name">Euphemistic framing</div>
-          <div class="scope-desc">Softened language such as "quietly" or "discreetly" that preserves harmful intent while sounding harmless.</div>
+          <div class="scope-name">Softened intent</div>
+          <div class="scope-desc">"Quietly", "discreetly", indirect phrasing that bypasses safeguards.</div>
         </div>
 
         <div class="scope-row">
           <div class="scope-num">03</div>
-          <div class="scope-name">Educational masking</div>
-          <div class="scope-desc">Prompts framed as research, journalism, fiction, or learning in order to bypass policy.</div>
+          <div class="scope-name">Pretext prompts</div>
+          <div class="scope-desc">"Research", "writing an article", "just curious" — harmless framing, same intent.</div>
         </div>
 
         <div class="scope-row">
           <div class="scope-num">04</div>
-          <div class="scope-name">Roleplay and persona attacks</div>
-          <div class="scope-desc">Simulated identities, fictional contexts, or assistant personas designed to weaken restrictions.</div>
+          <div class="scope-name">Roleplay attacks</div>
+          <div class="scope-desc">Users pretending, reframing, or asking the model to act differently.</div>
         </div>
 
         <div class="scope-row">
           <div class="scope-num">05</div>
-          <div class="scope-name">Prompt injection and override attempts</div>
-          <div class="scope-desc">Instruction conflicts intended to distort the model's priorities or escape existing safeguards.</div>
+          <div class="scope-name">Instruction conflicts</div>
+          <div class="scope-desc">Prompts that try to override rules or confuse system behaviour.</div>
         </div>
 
         <div class="scope-row">
           <div class="scope-num">06</div>
-          <div class="scope-name">Over-refusal detection</div>
-          <div class="scope-desc">Lawful, ordinary user queries that should be answered clearly, not blocked or escalated.</div>
+          <div class="scope-name">Normal user queries</div>
+          <div class="scope-desc">Safe, everyday requests — to catch over-refusal and friction.</div>
         </div>
       </div>
     </div>
