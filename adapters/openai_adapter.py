@@ -5,10 +5,12 @@ from adapters.base import BaseAdapter
 
 
 class OpenAIAdapter(BaseAdapter):
-    def __init__(self, model: str = "gpt-4o-mini", system_prompt: str = None):
-        api_key = os.getenv("OPENAI_API_KEY")
+    def __init__(self, model: str = "gpt-4o-mini", system_prompt: str = None, api_key: str = None):
+        # Per-run credential injection (MIGRATION.md Step 1): explicit api_key is
+        # the SaaS path; env fallback keeps local/CLI runs working.
+        api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment.")
+            raise ValueError("No OpenAI credential: pass api_key or set OPENAI_API_KEY.")
 
         self.client = OpenAI(api_key=api_key)
         self.model = model

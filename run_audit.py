@@ -51,12 +51,13 @@ Write 3 concise, specific recommendations for improving this AI system's safety.
 Reference the actual failures and families. Be direct. No fluff."""
 
         message = client.messages.create(
-            model="claude-opus-4-6",
+            model="claude-opus-4-7",
             max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
 
         text = message.content[0].text.strip()
+        # print("can i see the text": text)
         recommendations = [r.strip("- ").strip() for r in text.split("\n") if r.strip() and r.strip() != ""]
         return recommendations
 
@@ -184,14 +185,53 @@ def save_report(report, path=None):
     print(f"\nSaved report → {path}")
 
 
-def run_audit(profile):
-    model = RWModel(**profile["learner_config"])
-    prompt_cases = build_prompt_cases(profile["prompt_families"])
+def score_one_case(case, profile, model, adapter, prev_cues, prev_reward):
+    """Score a single (family, prompt) case. Lifted verbatim from run_audit's loop
+    body (MIGRATION.md Step 5) so the async worker can call it over the FROZEN probe
+    set without re-implementing — keeping engine behaviour identical (golden-gated).
+
+    Returns (turn_result, predicted) — caller threads prev_cues/prev_reward and
+    performs the RW update, matching the original turn-over-turn ordering.
+    """
     extract_cues = profile["extract_cues"]
     generate_response = profile["generate_response"]
+    family = case["family"]
+    user_input = case["prompt"]
+
+    active_cues = extract_cues(user_input)
+    configural_cues = model.get_configural_cues(active_cues)
+    predicted = model.predict(active_cues)
+
+    if adapter is not None:
+        response = adapter.generate(user_input)
+    else:
+        response = generate_response(predicted_risk=predicted, active_cues=active_cues)
+
+    lambda_value = evaluate_outcome(user_input, response, active_cues, profile)
+
+    phrases = profile.get("response_phrases", {})
+    response_type = classify_response(response, **phrases) if phrases else "other"
+
+    turn_result = {
+        "family": family,
+        "input": user_input,
+        "active_cues": active_cues,
+        "configural_cues": configural_cues,
+        "predicted_risk": round(predicted, 3),
+        "response": response,
+        "response_type": response_type,
+        "lambda": lambda_value,
+    }
+    return turn_result, predicted
+
+
+def run_audit(profile, credential=None):
+    model = RWModel(**profile["learner_config"])
+    prompt_cases = build_prompt_cases(profile["prompt_families"])
     adapter = None
     if profile.get("adapter_config"):
-        adapter = build_adapter(profile["adapter_config"])
+        # credential is the per-run key for key-based providers (MIGRATION.md Step 1).
+        adapter = build_adapter(profile["adapter_config"], credential=credential)
 
     learned_anchors = {}
     try:
@@ -206,47 +246,16 @@ def run_audit(profile):
     prev_reward = None
 
     for case in prompt_cases:
-        family = case["family"]
-        user_input = case["prompt"]
-
-        active_cues = extract_cues(user_input)
-        configural_cues = model.get_configural_cues(active_cues)
-        predicted = model.predict(active_cues)
-
-        if adapter is not None:
-            response = adapter.generate(user_input)
-        else:
-            response = generate_response(
-                predicted_risk=predicted,
-                active_cues=active_cues,
-            )
-
-        lambda_value = evaluate_outcome(
-            user_input,
-            response,
-            active_cues,
-            profile,
-        )
-
-        phrases = profile.get("response_phrases", {})
-        response_type = classify_response(response, **phrases) if phrases else "other"
+        turn_result, predicted = score_one_case(
+            case, profile, model, adapter, prev_cues, prev_reward)
 
         if prev_cues is not None:
             model.update(prev_cues, prev_reward, predicted, gamma=0.9)
 
-        turn_results.append({
-            "family": family,
-            "input": user_input,
-            "active_cues": active_cues,
-            "configural_cues": configural_cues,
-            "predicted_risk": round(predicted, 3),
-            "response": response,
-            "response_type": response_type,
-            "lambda": lambda_value,
-        })
+        turn_results.append(turn_result)
 
-        prev_cues = active_cues
-        prev_reward = lambda_value
+        prev_cues = turn_result["active_cues"]
+        prev_reward = turn_result["lambda"]
         collect(turn_results[-1], profile["name"], adapter.name if adapter else "simulation")
 
     if prev_cues is not None:

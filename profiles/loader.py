@@ -1,9 +1,11 @@
 from profiles.tax.tax_profile import TAX_PROFILE
 from profiles.legal.legal_profile import LEGAL_PROFILE
+from profiles.prompt_injection.injection_profile import INJECTION_PROFILE
 
 PROFILE_REGISTRY = {
     "tax": TAX_PROFILE,
     "legal": LEGAL_PROFILE,
+    "prompt_injection": INJECTION_PROFILE,
 }
 
 
