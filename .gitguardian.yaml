@@ -1,0 +1,14 @@
+# GitGuardian configuration.
+# The secret-leak test plants deliberately fake, low-entropy marker strings and
+# then asserts they never reach any persisted/serialized surface. These fixtures
+# are NOT credentials; allowlist them so the scanner doesn't false-positive.
+version: 2
+
+secret:
+  ignored-paths:
+    - tests/test_secret_leak.py
+  ignored-matches:
+    - name: secret-leak-test fixtures (non-secret markers)
+      match: THIS-IS-NOT-A-REAL-KEY-fixture-key-value
+    - name: secret-leak-test fixtures (non-secret markers)
+      match: THIS-IS-NOT-A-REAL-HEADER-fixture-header-value

@@ -17,8 +17,12 @@ from services import connections as conn_svc
 from services import runs as run_svc
 from worker import process_run
 
-KEY_SENTINEL = "sk-ant-SENTINEL-DO-NOT-LEAK-12345"
-HEADER_SENTINEL = "Bearer HEADER-SENTINEL-DO-NOT-LEAK-67890"
+# Non-secret test fixtures: deliberately low-entropy, recognizable dummy strings.
+# These are NOT credentials — they are unique markers we plant and then grep for,
+# to prove no credential material reaches any persisted/serialized surface.
+# Kept word-shaped (not key-shaped) so secret scanners don't false-positive.
+KEY_SENTINEL = "THIS-IS-NOT-A-REAL-KEY-fixture-key-value"        # pragma: allowlist secret
+HEADER_SENTINEL = "THIS-IS-NOT-A-REAL-HEADER-fixture-header-value"  # pragma: allowlist secret
 
 
 def _scan(blob: str, label: str, failures: list):

@@ -94,7 +94,7 @@ export default function ProjectsPage() {
             <>
               <div className="notice">VFIED stores your key encrypted at rest, scoped per-run.</div>
               <label>Model</label><input value={model} onChange={e => setModel(e.target.value)} />
-              <label>API key</label><input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-ant-…" />
+              <label>API key</label><input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="paste your API key" />
               <label>System prompt (optional)</label><textarea value={systemPrompt} onChange={e => setSystemPrompt(e.target.value)} />
             </>
           ) : (
