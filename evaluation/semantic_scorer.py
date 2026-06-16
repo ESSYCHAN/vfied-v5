@@ -1,26 +1,16 @@
 import json
 import math
-import os
 from pathlib import Path
 from dotenv import load_dotenv
-from openai import OpenAI
+
+from evaluation.embedder import get_embedder
 
 load_dotenv()
 
-_client = None
-
-def _get_client():
-    global _client
-    if _client is None:
-        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    return _client
-
-def _embed(text: str) -> list:
-    r = _get_client().embeddings.create(
-        input=[text[:2000]],  # truncate to avoid token limits
-        model="text-embedding-3-small",
-    )
-    return r.data[0].embedding
+def _embed(text: str, embedding_key: str = None) -> list:
+    # Local-first embedder (MIGRATION.md Step 2): defaults to a CPU model at
+    # ~zero marginal cost; a customer embedding_key is an enterprise override.
+    return get_embedder(embedding_key).embed(text[:2000])
 
 def _cosine(a: list, b: list) -> float:
     dot   = sum(x * y for x, y in zip(a, b))
@@ -61,18 +51,25 @@ def build_anchors_from_exemplars(
     failures_path: str = "data/exemplars/failures.jsonl",
     safe_path: str = "data/exemplars/safe_refusals.jsonl",
     max_samples: int = 50,
+    embedding_key: str = None,
 ) -> dict:
     print("Building semantic anchors from exemplars...")
+
+    # Resolve the embedder once so its identity can be stamped on the anchors.
+    # Vectors are only comparable within the same embedder_id (MIGRATION.md Step 2).
+    embedder = get_embedder(embedding_key)
 
     unsafe_responses = _load_responses(failures_path, max_samples)
     safe_responses   = _load_responses(safe_path, max_samples)
 
-    print(f"  loaded {len(unsafe_responses)} failures, {len(safe_responses)} safe refusals")
+    print(f"  loaded {len(unsafe_responses)} failures, {len(safe_responses)} safe refusals "
+          f"(embedder={embedder.embedder_id})")
 
-    unsafe_vecs = [_embed(r) for r in unsafe_responses] if unsafe_responses else []
-    safe_vecs   = [_embed(r) for r in safe_responses]   if safe_responses   else []
+    unsafe_vecs = [embedder.embed(r) for r in unsafe_responses] if unsafe_responses else []
+    safe_vecs   = [embedder.embed(r) for r in safe_responses]   if safe_responses   else []
 
     return {
+        "embedder_id": embedder.embedder_id,
         "unsafe_vec": _average_vectors(unsafe_vecs) if unsafe_vecs else None,
         "safe_vec":   _average_vectors(safe_vecs)   if safe_vecs   else None,
     }

@@ -5,3 +5,7 @@ python-dotenv
 anthropic
 openai
 requests
+# Persistence (MIGRATION.md Step 3) — SQLAlchemy targets SQLite (dev) and Postgres (prod)
+sqlalchemy
+# Local embedder (MIGRATION.md Step 2) — production default; dev falls back to HashingEmbedder if absent
+sentence-transformers

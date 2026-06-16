@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .DS_Store
+vfied.db
+_objectstore/
+node_modules/
